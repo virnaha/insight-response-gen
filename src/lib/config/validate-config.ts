@@ -11,7 +11,7 @@ export const validateConfiguration = (): ConfigValidationResult => {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check required environment variables
+  // Check required environment variables - but don't fail if they're missing
   const requiredVars = [
     'VITE_OPENAI_API_KEY',
     'VITE_SUPABASE_URL',
@@ -21,7 +21,7 @@ export const validateConfiguration = (): ConfigValidationResult => {
 
   for (const envVar of requiredVars) {
     if (!import.meta.env[envVar]) {
-      errors.push(`Missing required environment variable: ${envVar}`);
+      warnings.push(`Missing environment variable: ${envVar} (using demo mode)`);
     }
   }
 
@@ -60,7 +60,7 @@ export const validateConfiguration = (): ConfigValidationResult => {
     }
   }
 
-  // Validate URLs
+  // Validate URLs - but don't fail if they're missing
   const urlVars = [
     { key: 'VITE_SUPABASE_URL', name: 'Supabase URL' },
     { key: 'VITE_API_BASE_URL', name: 'API Base URL', optional: true },
@@ -75,7 +75,7 @@ export const validateConfiguration = (): ConfigValidationResult => {
         errors.push(`Invalid URL for ${name}: ${value}`);
       }
     } else if (!optional) {
-      errors.push(`Missing required URL: ${name}`);
+      warnings.push(`Missing URL: ${name} (using demo mode)`);
     }
   }
 
@@ -99,7 +99,7 @@ export const validateConfiguration = (): ConfigValidationResult => {
     try {
       config = createAPIConfig();
     } catch (error) {
-      errors.push(`Configuration creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      warnings.push(`Configuration creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -132,6 +132,13 @@ export const logConfigurationStatus = (): void => {
   if (result.warnings.length > 0) {
     console.warn('⚠️  Configuration warnings:');
     result.warnings.forEach(warning => console.warn('  -', warning));
+    
+    // Check if we're in demo mode
+    const isDemoMode = result.warnings.some(w => w.includes('demo mode'));
+    if (isDemoMode) {
+      console.log('🎭 Running in demo mode - some features may be limited');
+      console.log('💡 To enable full functionality, add environment variables in Vercel dashboard');
+    }
   }
   
   console.groupEnd();

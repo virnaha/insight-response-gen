@@ -265,3 +265,102 @@ The system automatically:
 The document integration system transforms your RFP response process by automatically incorporating your actual company information. This ensures responses are accurate, professional, and truly representative of your business capabilities.
 
 By following this guide and properly preparing your Zenloop documents, you'll be able to generate high-quality, company-specific RFP responses that accurately represent your business and increase your chances of winning new opportunities. 
+
+---
+
+## **Common Causes & Fixes**
+
+### 1. **Incorrect `base` Path in Vite Config**
+- If your app is not at the root (e.g., deployed to `/insight-response-gen/`), you need to set the `base` in `vite.config.ts`.
+- For Vercel, the default is usually fine (`'/'`), but if you changed it, set it back to `'/'`.
+
+**Check your `vite.config.ts`:**
+```ts
+export default defineConfig({
+  // ...other config
+  base: '/',
+});
+```
+
+---
+
+### 2. **Build Output Directory**
+- Vercel expects the build output to be in the `dist` folder.
+- Make sure your build command is `vite build` or `npm run build` and the output is `dist`.
+
+---
+
+### 3. **404 on Refresh or Routing Issues**
+- If you use React Router, you need a fallback for SPA routing.
+- On Vercel, add a `vercel.json` file in your project root:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
+```
+
+---
+
+### 4. **Check for Build Errors**
+- Go to your Vercel dashboard, open your project, and check the latest deployment logs for errors or warnings.
+
+---
+
+### 5. **Check Console Errors**
+- Open your browser’s developer tools (F12) and check the Console and Network tabs for errors (e.g., 404s for JS/CSS files).
+
+---
+
+## **What to Do Next**
+
+1. **Check your `vite.config.ts` for the correct `base` setting.**
+2. **If you use React Router, add the `vercel.json` rewrite above.**
+3. **Check Vercel build logs for errors.**
+4. **Check browser console for errors and let me know what you see.**
+
+---
+
+Would you like me to check your `vite.config.ts` and generate a `vercel.json` for you?  
+If you see any errors in the browser console or Vercel logs, please copy them here for more targeted help! 
+
+---
+
+The root cause of your blank page is almost certainly missing environment variables. Your codebase requires several Vite environment variables (like `VITE_OPENAI_API_KEY`, `VITE_SUPABASE_URL`, etc.) to be set at build time. If these are missing, the app will not render and may show a blank page—even if there are no errors in the Vercel logs.
+
+## **How to Fix**
+
+### 1. **Add Environment Variables in Vercel**
+1. Go to your project in the [Vercel dashboard](https://vercel.com/dashboard).
+2. Click on your project (`insight-response-gen`).
+3. Go to **Settings** → **Environment Variables**.
+4. Add all required variables:
+   - `VITE_OPENAI_API_KEY`
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_SUPABASE_SERVICE_ROLE_KEY`
+   - (and any others your app needs, as seen in your config files)
+5. Redeploy your project.
+
+### 2. **(Optional) Create a `.env` File Locally**
+If you want to test locally, create a `.env` file in your project root with the same variables:
+```
+VITE_OPENAI_API_KEY=your-openai-key
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+```
+*(Replace the values with your actual keys.)*
+
+---
+
+## **Summary**
+- Your app is blank because it requires environment variables that are not set on Vercel.
+- Add the required variables in the Vercel dashboard and redeploy.
+- The app should work after that!
+
+---
+
+If you need a full list of required variables or help finding their values, let me know! 

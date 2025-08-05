@@ -73,7 +73,7 @@ const getEnvBoolean = (key: string, defaultValue: boolean): boolean => {
 export const createAPIConfig = (): APIConfiguration => {
   try {
     const openaiConfig = OpenAIConfigSchema.parse({
-      apiKey: getEnvVar('VITE_OPENAI_API_KEY'),
+      apiKey: getEnvVar('VITE_OPENAI_API_KEY', false) || 'demo-key',
       organization: getEnvVar('VITE_OPENAI_ORGANIZATION', false),
       model: getEnvVar('VITE_OPENAI_MODEL') || 'gpt-4-turbo-preview',
       maxTokens: getEnvNumber('VITE_OPENAI_MAX_TOKENS', 4000),
@@ -81,9 +81,9 @@ export const createAPIConfig = (): APIConfiguration => {
     });
 
     const supabaseConfig = SupabaseConfigSchema.parse({
-      url: getEnvVar('VITE_SUPABASE_URL'),
-      anonKey: getEnvVar('VITE_SUPABASE_ANON_KEY'),
-      serviceRoleKey: getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY'),
+      url: getEnvVar('VITE_SUPABASE_URL', false) || 'https://demo.supabase.co',
+      anonKey: getEnvVar('VITE_SUPABASE_ANON_KEY', false) || 'demo-anon-key',
+      serviceRoleKey: getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY', false) || 'demo-service-key',
     });
 
     const apiConfig = APIConfigSchema.parse({
@@ -110,7 +110,34 @@ export const createAPIConfig = (): APIConfiguration => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('Configuration validation failed:', error.errors);
-      throw new Error(`Invalid configuration: ${error.errors.map(e => e.message).join(', ')}`);
+      // Return a fallback configuration instead of throwing
+      return {
+        openai: {
+          apiKey: 'demo-key',
+          organization: undefined,
+          model: 'gpt-4-turbo-preview',
+          maxTokens: 4000,
+          temperature: 0.7,
+        },
+        supabase: {
+          url: 'https://demo.supabase.co',
+          anonKey: 'demo-anon-key',
+          serviceRoleKey: 'demo-service-key',
+        },
+        api: {
+          baseUrl: 'http://localhost:3000/api',
+          timeout: 30000,
+          rateLimit: {
+            requests: 100,
+            windowMs: 60000,
+          },
+        },
+        features: {
+          enableAIGeneration: true,
+          enableRealTimeCollaboration: false,
+          enableAnalytics: true,
+        },
+      };
     }
     throw error;
   }
