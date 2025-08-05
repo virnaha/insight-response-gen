@@ -111,7 +111,7 @@ export const CompanyDocuments = () => {
     <div className="max-w-6xl">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">Company Documents</h2>
-        <p className="text-slate-600">Upload and manage your Zenloop documents for RFP response generation.</p>
+        <p className="text-slate-600">Upload and manage your zenloop documents for RFP response generation.</p>
       </div>
 
       {/* Upload Section */}
@@ -259,7 +259,7 @@ export const CompanyDocuments = () => {
         {filteredDocuments.length === 0 ? (
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-500">No documents found. Upload your Zenloop documents to get started.</p>
+            <p className="text-slate-500">No documents found. Upload your zenloop documents to get started.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

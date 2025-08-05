@@ -57,9 +57,9 @@ export const Dashboard = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                    RFP Analyzer Pro
+                    RFP Analyzer and Generator
                   </h1>
-                  <p className="text-sm text-slate-500">AI-Powered Proposal Management</p>
+                  <p className="text-sm text-slate-500">zenloop Proposal Management</p>
                 </div>
               </div>
             </div>
