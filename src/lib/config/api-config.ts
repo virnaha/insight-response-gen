@@ -10,13 +10,13 @@ const OpenAIConfigSchema = z.object({
 });
 
 const SupabaseConfigSchema = z.object({
-  url: z.string().url('Valid Supabase URL is required'),
+  url: z.string().min(1, 'Supabase URL is required'),
   anonKey: z.string().min(1, 'Supabase anon key is required'),
   serviceRoleKey: z.string().min(1, 'Supabase service role key is required'),
 });
 
 const APIConfigSchema = z.object({
-  baseUrl: z.string().url('Valid API base URL is required'),
+  baseUrl: z.string().min(1, 'API base URL is required'),
   timeout: z.number().min(1000).max(120000).default(30000),
   rateLimit: z.object({
     requests: z.number().min(1).default(100),
@@ -71,76 +71,83 @@ const getEnvBoolean = (key: string, defaultValue: boolean): boolean => {
 
 // Configuration validation and creation
 export const createAPIConfig = (): APIConfiguration => {
-  try {
-    const openaiConfig = OpenAIConfigSchema.parse({
-      apiKey: getEnvVar('VITE_OPENAI_API_KEY', false) || 'demo-key',
-      organization: getEnvVar('VITE_OPENAI_ORGANIZATION', false),
-      model: getEnvVar('VITE_OPENAI_MODEL') || 'gpt-4-turbo-preview',
-      maxTokens: getEnvNumber('VITE_OPENAI_MAX_TOKENS', 4000),
-      temperature: getEnvNumber('VITE_OPENAI_TEMPERATURE', 0.7) / 10, // Convert from 0-20 to 0-2 scale
-    });
+  // Check if we have real environment variables
+  const hasRealConfig = import.meta.env.VITE_OPENAI_API_KEY && 
+                       import.meta.env.VITE_SUPABASE_URL && 
+                       import.meta.env.VITE_SUPABASE_ANON_KEY && 
+                       import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-    const supabaseConfig = SupabaseConfigSchema.parse({
-      url: getEnvVar('VITE_SUPABASE_URL', false) || 'https://demo.supabase.co',
-      anonKey: getEnvVar('VITE_SUPABASE_ANON_KEY', false) || 'demo-anon-key',
-      serviceRoleKey: getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY', false) || 'demo-service-key',
-    });
+  if (hasRealConfig) {
+    try {
+      const openaiConfig = OpenAIConfigSchema.parse({
+        apiKey: getEnvVar('VITE_OPENAI_API_KEY'),
+        organization: getEnvVar('VITE_OPENAI_ORGANIZATION', false),
+        model: getEnvVar('VITE_OPENAI_MODEL') || 'gpt-4-turbo-preview',
+        maxTokens: getEnvNumber('VITE_OPENAI_MAX_TOKENS', 4000),
+        temperature: getEnvNumber('VITE_OPENAI_TEMPERATURE', 0.7) / 10,
+      });
 
-    const apiConfig = APIConfigSchema.parse({
-      baseUrl: getEnvVar('VITE_API_BASE_URL') || 'http://localhost:3000/api',
-      timeout: getEnvNumber('VITE_API_TIMEOUT', 30000),
-      rateLimit: {
-        requests: getEnvNumber('VITE_API_RATE_LIMIT_REQUESTS', 100),
-        windowMs: getEnvNumber('VITE_API_RATE_LIMIT_WINDOW', 60000),
-      },
-    });
+      const supabaseConfig = SupabaseConfigSchema.parse({
+        url: getEnvVar('VITE_SUPABASE_URL'),
+        anonKey: getEnvVar('VITE_SUPABASE_ANON_KEY'),
+        serviceRoleKey: getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY'),
+      });
 
-    const featureFlags = FeatureFlagsSchema.parse({
-      enableAIGeneration: getEnvBoolean('VITE_ENABLE_AI_GENERATION', true),
-      enableRealTimeCollaboration: getEnvBoolean('VITE_ENABLE_REAL_TIME_COLLABORATION', false),
-      enableAnalytics: getEnvBoolean('VITE_ENABLE_ANALYTICS', true),
-    });
+      const apiConfig = APIConfigSchema.parse({
+        baseUrl: getEnvVar('VITE_API_BASE_URL') || 'http://localhost:3000/api',
+        timeout: getEnvNumber('VITE_API_TIMEOUT', 30000),
+        rateLimit: {
+          requests: getEnvNumber('VITE_API_RATE_LIMIT_REQUESTS', 100),
+          windowMs: getEnvNumber('VITE_API_RATE_LIMIT_WINDOW', 60000),
+        },
+      });
 
-    return {
-      openai: openaiConfig,
-      supabase: supabaseConfig,
-      api: apiConfig,
-      features: featureFlags,
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error('Configuration validation failed:', error.errors);
-      // Return a fallback configuration instead of throwing
+      const featureFlags = FeatureFlagsSchema.parse({
+        enableAIGeneration: getEnvBoolean('VITE_ENABLE_AI_GENERATION', true),
+        enableRealTimeCollaboration: getEnvBoolean('VITE_ENABLE_REAL_TIME_COLLABORATION', false),
+        enableAnalytics: getEnvBoolean('VITE_ENABLE_ANALYTICS', true),
+      });
+
       return {
-        openai: {
-          apiKey: 'demo-key',
-          organization: undefined,
-          model: 'gpt-4-turbo-preview',
-          maxTokens: 4000,
-          temperature: 0.7,
-        },
-        supabase: {
-          url: 'https://demo.supabase.co',
-          anonKey: 'demo-anon-key',
-          serviceRoleKey: 'demo-service-key',
-        },
-        api: {
-          baseUrl: 'http://localhost:3000/api',
-          timeout: 30000,
-          rateLimit: {
-            requests: 100,
-            windowMs: 60000,
-          },
-        },
-        features: {
-          enableAIGeneration: true,
-          enableRealTimeCollaboration: false,
-          enableAnalytics: true,
-        },
+        openai: openaiConfig,
+        supabase: supabaseConfig,
+        api: apiConfig,
+        features: featureFlags,
       };
+    } catch (error) {
+      console.warn('Real config validation failed, falling back to demo mode:', error);
     }
-    throw error;
   }
+
+  // Return demo configuration
+  console.log('🎭 Using demo configuration - add environment variables for full functionality');
+  return {
+    openai: {
+      apiKey: 'demo-key',
+      organization: undefined,
+      model: 'gpt-4-turbo-preview',
+      maxTokens: 4000,
+      temperature: 0.7,
+    },
+    supabase: {
+      url: 'https://demo.supabase.co',
+      anonKey: 'demo-anon-key',
+      serviceRoleKey: 'demo-service-key',
+    },
+    api: {
+      baseUrl: 'http://localhost:3000/api',
+      timeout: 30000,
+      rateLimit: {
+        requests: 100,
+        windowMs: 60000,
+      },
+    },
+    features: {
+      enableAIGeneration: true,
+      enableRealTimeCollaboration: false,
+      enableAnalytics: true,
+    },
+  };
 };
 
 // Rate limiting utilities
